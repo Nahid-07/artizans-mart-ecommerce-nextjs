@@ -145,7 +145,7 @@ export default function StatsPage() {
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-bold text-gray-900">Revenue Analytics</h3>
             </div>
-            <div className="h-[350px]">
+            <div className="h-87.5">
               {stats.orderStats.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={stats.orderStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -180,7 +180,7 @@ export default function StatsPage() {
           {/* Secondary Donut Chart: Spans 1 Column */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-bold text-gray-900 mb-6">Sales by Category</h3>
-            <div className="h-[300px]">
+            <div className="h-75">
               {stats.categoryStats.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -216,7 +216,7 @@ export default function StatsPage() {
 
         {/* 3. Quick Workspace Area */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white shadow-md flex flex-col justify-center relative overflow-hidden">
+            <div className="bg-linear-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white shadow-md flex flex-col justify-center relative overflow-hidden">
                 <div className="relative z-10">
                     <h3 className="text-2xl font-bold mb-2">Ready to expand your catalog?</h3>
                     <p className="text-blue-100 mb-6 max-w-sm">Keep your inventory fresh to maintain your growth trend. Add new products to your store in just a few clicks.</p>

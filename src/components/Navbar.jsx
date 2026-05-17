@@ -1,12 +1,14 @@
 'use client'
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import {
   Bars3Icon,
   XMarkIcon,
   MagnifyingGlassIcon,
   ShoppingCartIcon,
-} from "@heroicons/react/24/solid";
+} from "@heroicons/react/24/outline"; // Switched to outline for a cleaner modern look
 import Link from 'next/link';
+import { usePathname } from 'next/navigation'; // Added to detect active links
+import { motion, AnimatePresence } from "framer-motion";
 import SearchModal from "./SearchModal";
 import { AuthContext } from "../context_API/authContext";
 import { SearchBarDesktop } from "./SearchBarDesktop";
@@ -16,144 +18,188 @@ const Navbar = () => {
   const { user, logOut } = useContext(AuthContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
-  const {cartItems} = useCart()
+  const [scrolled, setScrolled] = useState(false);
+  const { cartItems } = useCart();
+  const pathname = usePathname();
+
+  // Add a subtle shadow only when the user scrolls down
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const openSearchModal = () => setSearchModalOpen(true);
   const closeSearchModal = () => setSearchModalOpen(false);
-  const handleLogOut = () => {
-    logOut();
-  };
+  
+  const navLinks = [
+    { name: 'Home', path: '/' },
+    { name: 'Shop', path: '/shop' },
+    { name: 'Track Order', path: '/track_order' },
+    { name: 'About Us', path: '/about_us' },
+  ];
+
   return (
     <>
-      <nav className="bg-white shadow-lg fixed w-full top-0 left-0 z-50">
-        <div className="container mx-auto px-4 py-4 md:flex md:justify-between md:items-center">
+      {/* Glassmorphic Navbar */}
+      <nav 
+        className={`fixed w-full top-0 left-0 z-50 transition-all duration-300 ${
+          scrolled 
+            ? "bg-white/80 backdrop-blur-lg border-b border-gray-200/50 shadow-sm py-3" 
+            : "bg-white/50 backdrop-blur-md border-b border-transparent py-5"
+        }`}
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          
           {/* Left Part: Logo */}
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center w-full md:w-auto">
             <Link
               href="/"
-              className="text-xl font-semibold text-gray-800 whitespace-nowrap"
+              className="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-linear-to-r from-blue-700 to-indigo-600 whitespace-nowrap"
             >
               Artizans' Mart
             </Link>
-            {/* Mobile menu and search/cart buttons */}
-            <div className="md:hidden flex items-center space-x-4">
+
+            {/* Mobile Actions */}
+            <div className="md:hidden flex items-center space-x-2">
               <button
                 onClick={openSearchModal}
-                className="text-gray-800 hover:text-blue-500 transition-colors duration-300"
+                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
               >
                 <MagnifyingGlassIcon className="h-6 w-6" />
               </button>
               <Link
                 href="/cart"
-                className="relative text-gray-800 hover:text-blue-500 transition-colors duration-300"
+                className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
               >
                 <ShoppingCartIcon className="h-6 w-6" />
                 {cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-2 inline-flex items-center justify-center h-4 w-4 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center h-5 w-5 text-[10px] font-bold text-white bg-blue-600 border-2 border-white rounded-full">
                     {cartItems.length}
                   </span>
                 )}
               </Link>
               <button
                 onClick={toggleMenu}
-                className="text-gray-800 focus:outline-none"
+                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors focus:outline-none"
               >
-                {isMenuOpen ? (
-                  <XMarkIcon className="h-6 w-6" />
-                ) : (
-                  <Bars3Icon className="h-6 w-6" />
-                )}
+                {isMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
               </button>
             </div>
           </div>
 
           {/* Middle Part: Search Bar (Desktop Only) */}
-          <div className="hidden md:flex grow items-center md:justify-center">
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
             <SearchBarDesktop />
           </div>
 
-          {/* Right Part: Menu Items & Icons */}
-          <div
-            className={`md:flex md:items-center md:space-x-6 ${
-              isMenuOpen ? "block" : "hidden"
-            }`}
-          >
-            <ul className="flex flex-col md:flex-row md:space-x-8 px-4 py-8 md:py-0">
-              <li>
+          {/* Right Part: Desktop Menu Items & Actions */}
+          <div className="hidden md:flex items-center space-x-1">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.path;
+              return (
                 <Link
-                  href="/"
-                  className="block py-2 text-gray-800 hover:text-blue-500 transition-colors duration-300"
+                  key={link.name}
+                  href={link.path}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
+                    isActive 
+                      ? "bg-blue-50 text-blue-700" 
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
                 >
-                  Home
+                  {link.name}
                 </Link>
-              </li>
-              <li>
-                <Link
-                  href="/shop"
-                  className="block py-2 text-gray-800 hover:text-blue-500 transition-colors duration-300"
-                >
-                  Shop
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/about_us"
-                  className="block py-2 text-gray-800 hover:text-blue-500 transition-colors duration-300"
-                >
-                  About Us
-                </Link>
-              </li>
-              {/* Login/Logout for mobile menu */}
-              <li className="md:hidden mt-4">
-                {!user?.email ? (
-                  <Link
-                    href="/login_user"
-                    className="bg-blue-500 text-white px-4 py-2 rounded-full w-full block text-center hover:bg-blue-600 transition-colors duration-300"
-                  >
-                    Login
-                  </Link>
-                ) : (
-                  <button
-                    onClick={handleLogOut}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-full w-full block text-center hover:bg-blue-600 transition-colors duration-300"
-                  >
-                    Log out
-                  </button>
-                )}
-              </li>
-            </ul>
-          </div>
-          <div className="hidden md:flex items-center space-x-6">
-            <Link
-              href="/cart"
-              className="relative text-gray-800 hover:text-blue-500 transition-colors duration-300"
-            >
-              <ShoppingCartIcon className="h-6 w-6" />
-              {cartItems.length > 0 && (
-                <span className="absolute -top-1 -right-2 inline-flex items-center justify-center h-4 w-4 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
-                  {cartItems.length}
-                </span>
-              )}
-            </Link>
-            {!user?.email ? (
+              );
+            })}
+
+            <div className="flex items-center space-x-4 pl-4 ml-2 border-l border-gray-200">
               <Link
-                href="/login_user"
-                className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors duration-300"
+                href="/cart"
+                className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-300 transform hover:scale-110"
               >
-                Login
+                <ShoppingCartIcon className="h-6 w-6" />
+                {cartItems.length > 0 && (
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center h-5 w-5 text-[10px] font-bold text-white bg-blue-600 border-2 border-white rounded-full">
+                    {cartItems.length}
+                  </span>
+                )}
               </Link>
-            ) : (
-              <button
-                onClick={handleLogOut}
-                className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors duration-300"
-              >
-                Log out
-              </button>
-            )}
+              
+              {!user?.email ? (
+                <Link
+                  href="/login_user"
+                  className="bg-gray-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-0.5"
+                >
+                  Log In
+                </Link>
+              ) : (
+                <button
+                  onClick={logOut}
+                  className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-full text-sm font-bold hover:bg-red-50 hover:text-red-600 transition-all duration-300"
+                >
+                  Log Out
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </nav>
+
+      {/* Mobile Menu Dropdown (Animated with Framer Motion) */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="md:hidden fixed top-18 left-0 w-full bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-xl z-40"
+          >
+            <div className="px-4 pt-2 pb-6 space-y-1 flex flex-col">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.path;
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.path}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`block px-4 py-3 rounded-xl text-base font-semibold transition-colors ${
+                      isActive 
+                        ? "bg-blue-50 text-blue-700" 
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
+              
+              <div className="pt-4 mt-2 border-t border-gray-100">
+                {!user?.email ? (
+                  <Link
+                    href="/login_user"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex justify-center w-full bg-blue-600 text-white px-4 py-3 rounded-xl text-base font-bold hover:bg-blue-700 transition-colors"
+                  >
+                    Log In
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => { logOut(); setIsMenuOpen(false); }}
+                    className="flex justify-center w-full bg-gray-100 text-gray-800 px-4 py-3 rounded-xl text-base font-bold hover:bg-gray-200 transition-colors"
+                  >
+                    Log Out
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <SearchModal isOpen={searchModalOpen} onClose={closeSearchModal} />
     </>
   );

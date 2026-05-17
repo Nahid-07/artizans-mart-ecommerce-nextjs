@@ -5,7 +5,7 @@ import { AuthContext } from "@/context_API/authContext"; // FIXED: Imported your
 
 const axiosSecure = axios.create({
   // Use your environment variable, fallback to the render URL if it fails
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://artizans-mart-ecommerce-server.onrender.com"
+  baseURL: process.env.NEXT_PUBLIC_API_URL
 });
 
 const useAxiosSecure = () => {

@@ -7,7 +7,7 @@ import Newsletter from '@/components/Newsletter';
 // Do NOT wrap this in <HomePageLayout>
 export default function HomePage() {
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col">
       <Hero />
       <Categories />
       <ProductGrid />

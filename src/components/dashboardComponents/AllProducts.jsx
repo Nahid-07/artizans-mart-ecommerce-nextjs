@@ -98,7 +98,7 @@ const AllProducts = () => {
               {products.map((product) => (
                 <tr key={product._id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <span className="line-clamp-1 max-w-[200px]">{product.name}</span>
+                    <span className="line-clamp-1 max-w-50">{product.name}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {product.brand}
