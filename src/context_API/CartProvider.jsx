@@ -57,7 +57,10 @@ export const CartProvider = ({ children }) => {
       )
     );
   };
-
+const clearCart = () => {
+    setCartItems([]);
+    localStorage.removeItem("cartItems"); // Ensure this matches your storage key
+  };
   const handleRemoveCartItems = () => {
     setCartItems([]);
   };
@@ -69,6 +72,7 @@ export const CartProvider = ({ children }) => {
     handleRemoveItem,
     handleUpdateQuantity,
     handleRemoveCartItems,
+    clearCart
   };
 
   // Avoid hydration mismatch by waiting for the client-side mount if needed, 

@@ -3,14 +3,19 @@ import Categories from '@/components/Categories';
 import ProductGrid from '@/components/ProductGrid';
 import Testimonial from '@/components/Testimonial';
 import Newsletter from '@/components/Newsletter';
+import FeaturedProducts from '@/components/FeaturedProducts';
+import StoryBlock from '@/components/StoryBlock';
+import TrustBar from '@/components/TrustBar';
 
 // Do NOT wrap this in <HomePageLayout>
 export default function HomePage() {
   return (
     <div className="flex flex-col">
       <Hero />
+      <TrustBar/>
       <Categories />
-      <ProductGrid />
+      <FeaturedProducts/>
+      <StoryBlock/>
       <Testimonial />
       <Newsletter />
     </div>

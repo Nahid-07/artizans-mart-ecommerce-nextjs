@@ -21,7 +21,7 @@ export default function CartCheckoutPage() {
   const { user } = useContext(AuthContext);
   const router = useRouter();
   const axiosPublic = useAxiosPublic();
-  const { cartItems } = useCart();
+  const { cartItems, clearCart } = useCart();
 
   const [shippingInfo, setShippingInfo] = useState({
     name: "",
@@ -97,6 +97,7 @@ export default function CartCheckoutPage() {
       if (res.data) {
         toast.success("Order placed successfully!");
 
+        clearCart();
         const newOrderId = res.data.insertedId || res.data._id;
 
         router.push(`/thank-you?orderId=${newOrderId}`);

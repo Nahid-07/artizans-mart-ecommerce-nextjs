@@ -71,7 +71,7 @@ const SearchModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-gray-900/90 flex justify-center items-start pt-20 transition-opacity duration-300">
+    <div className="fixed inset-0 z-100 bg-gray-900/90 flex justify-center items-start pt-20 transition-opacity duration-300">
       <div
         ref={modalRef}
         className="w-11/12 md:w-3/4 lg:w-1/2 bg-white rounded-lg shadow-xl overflow-hidden"
@@ -116,7 +116,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                     onClick={onClose}
                   >
                     {/* Image Box */}
-                    <div className="relative w-12 h-12 flex-shrink-0 border border-gray-200 rounded-md overflow-hidden bg-gray-50">
+                    <div className="relative w-12 h-12 shrink-0 border border-gray-200 rounded-md overflow-hidden bg-gray-50">
                       <Image
                         src={item.images?.[0] || "/placeholder.png"}
                         alt={item.name}
@@ -126,7 +126,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                       />
                     </div>
                     {/* Text Container */}
-                    <div className="flex flex-col flex-grow">
+                    <div className="flex flex-col grow">
                       <span className="text-sm font-semibold text-gray-900 line-clamp-1">
                         {item.name}
                       </span>
