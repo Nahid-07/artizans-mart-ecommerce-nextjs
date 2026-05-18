@@ -1,12 +1,20 @@
-'use client'; 
+"use client";
 
 import { useState, useEffect, useContext } from "react";
-import { ShoppingCartIcon } from "@heroicons/react/24/solid";
+import {
+  ShoppingCartIcon,
+  ShieldCheckIcon,
+  CreditCardIcon,
+  CheckCircleIcon,
+  TruckIcon,
+} from "@heroicons/react/24/outline";
 import { useParams, useRouter } from "next/navigation";
 import { AuthContext } from "@/context_API/authContext";
 import useAxiosPublic from "@/hooks/useAxiosPublic";
 import toast from "react-hot-toast";
-import Image from "next/image"; // ADDED: Next.js Image Component
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function CheckoutPage() {
   const { user } = useContext(AuthContext);
@@ -17,6 +25,7 @@ export default function CheckoutPage() {
 
   const [productData, setProductData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [shippingInfo, setShippingInfo] = useState({
     name: "",
@@ -50,20 +59,13 @@ export default function CheckoutPage() {
 
       try {
         const res = await axiosPublic.get(`/product/${id}`);
-        
-        // --- SMART EXTRACTION LOGIC ---
-        let productObj = res.data;
-        
-        if (productObj && productObj.data) {
-            productObj = productObj.data;
-        } else if (productObj && productObj.product) {
-            productObj = productObj.product;
-        }
 
-        if (Array.isArray(productObj)) {
-            productObj = productObj[0];
-        }
-        
+        let productObj = res.data;
+        if (productObj && productObj.data) productObj = productObj.data;
+        else if (productObj && productObj.product)
+          productObj = productObj.product;
+        if (Array.isArray(productObj)) productObj = productObj[0];
+
         setProductData(productObj);
       } catch (err) {
         console.error("Error fetching product for checkout:", err);
@@ -94,21 +96,17 @@ export default function CheckoutPage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setShippingInfo({
-      ...shippingInfo,
-      [name]: value,
-    });
+    setShippingInfo({ ...shippingInfo, [name]: value });
   };
+
+  const productPrice = parseFloat(productData?.offer_price) || 0;
+  const total = productPrice + shippingFee;
 
   const handleConfirmOrder = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const today = new Date();
-    const year = today.getFullYear();
-    const month = (today.getMonth() + 1).toString().padStart(2, "0");
-    const day = today.getDate().toString().padStart(2, "0");
-
-    const formattedDate = `${year}-${month}-${day}`;
-    const safePrice = parseFloat(productData?.offer_price) || 0;
+    const formattedDate = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}`;
 
     const orderDetails = {
       shippingInfo,
@@ -116,12 +114,12 @@ export default function CheckoutPage() {
         {
           id: productData?._id,
           name: productData?.name || "Unknown Product",
-          price: safePrice,
+          price: productPrice,
           quantity: 1,
         },
       ],
       shippingFee,
-      total: safePrice + shippingFee,
+      total: total,
       date: formattedDate,
     };
 
@@ -129,188 +127,319 @@ export default function CheckoutPage() {
       const res = await axiosPublic.post("/place-order", orderDetails);
       if (res.data) {
         toast.success("Order placed successfully!");
-        router.push('/thank-you'); 
+
+        const newOrderId = res.data.insertedId || res.data._id;
+
+        router.push(`/thank-you?orderId=${newOrderId}`);
       }
     } catch (err) {
       console.error("Order Failed:", err);
       toast.error("Failed to process order. Please try again.");
+      setIsSubmitting(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center bg-gray-100">
-        <p className="text-xl font-semibold text-gray-500">Loading Checkout...</p>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+          <p className="text-lg font-bold text-gray-500 tracking-widest uppercase">
+            Securing Checkout
+          </p>
+        </div>
       </div>
     );
   }
 
   if (!productData || Object.keys(productData).length === 0) {
     return (
-      <div className="flex flex-col min-h-[60vh] items-center justify-center bg-gray-100">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
-        <button onClick={() => router.back()} className="text-blue-600 hover:underline">
-          Go Back
-        </button>
+      <div className="flex flex-col min-h-[70vh] items-center justify-center bg-gray-50 pt-16">
+        <div className="bg-white p-12 rounded-3xl shadow-sm border border-gray-100 text-center max-w-md">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Product Not Found
+          </h2>
+          <p className="text-gray-500 mb-8">
+            The item you are trying to purchase could not be loaded.
+          </p>
+          <button
+            onClick={() => router.back()}
+            className="bg-blue-600 text-white font-bold px-8 py-4 rounded-xl hover:bg-blue-700 hover:shadow-lg transition-all w-full"
+          >
+            Go Back
+          </button>
+        </div>
       </div>
     );
   }
 
-  const productPrice = parseFloat(productData.offer_price) || 0;
-  const total = productPrice + shippingFee;
+  // Modern Input Classes
+  const inputClass =
+    "mt-2 block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors";
+  const labelClass =
+    "block text-sm font-bold text-gray-700 uppercase tracking-wide";
 
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <div className="container mx-auto px-4 py-16 mt-8">
-        <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-10">
-          Checkout
-        </h2>
-        <div className="flex flex-col md:flex-row md:space-x-12">
-          {/* Left Side: Customer Information Form */}
-          <div className="w-full md:w-1/2 bg-white rounded-lg shadow-xl p-8">
-            <h3 className="text-xl font-bold text-gray-800 border-b pb-2 mb-6">
-              Shipping Information
-            </h3>
-            <form onSubmit={handleConfirmOrder} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={shippingInfo.name}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={shippingInfo.phone}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Email (Optional)
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={shippingInfo.email}
-                  onChange={handleInputChange}
-                  placeholder="Optional"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Select area
-                </label>
-                <select
-                  name="area"
-                  value={shippingInfo.area}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 bg-white"
-                >
-                  <option value="" disabled>
-                    Select a delivery area
-                  </option>
-                  <option value="insideDhakaSouth">
-                    Dhaka (South city corporation)
-                  </option>
-                  <option value="insideDhakaNorth">
-                    Dhaka (North city corporation)
-                  </option>
-                  <option value="Gazipur">Gazipur</option>
-                  <option value="OutSideDhaka">Outside Of Dhaka</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Shipping Address
-                </label>
-                <textarea
-                  name="address"
-                  value={shippingInfo.address}
-                  onChange={handleInputChange}
-                  rows="4"
-                  required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Notes (optional)
-                </label>
-                <textarea
-                  name="note"
-                  value={shippingInfo.note}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-              <div className="mt-8">
-                <button
-                  type="submit"
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
-                >
-                  <ShoppingCartIcon className="h-5 w-5 mr-2" />
-                  Confirm Order
-                </button>
-              </div>
-            </form>
+    <div className="bg-gray-50 min-h-screen pt-24 pb-16 font-sans">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+        {/* Minimalist Progress Indicator */}
+        <div className="flex items-center justify-center space-x-4 mb-12">
+          <div className="flex items-center text-blue-600">
+            <CheckCircleIcon className="h-6 w-6 mr-2" />
+            <span className="font-bold text-sm uppercase tracking-wider">
+              Product
+            </span>
           </div>
+          <div className="w-12 h-px bg-blue-600"></div>
+          <div className="flex items-center text-blue-600">
+            <div className="h-6 w-6 rounded-full border-2 border-blue-600 flex items-center justify-center mr-2">
+              <span className="text-xs font-bold">2</span>
+            </div>
+            <span className="font-bold text-sm uppercase tracking-wider">
+              Details
+            </span>
+          </div>
+          <div className="w-12 h-px bg-gray-300"></div>
+          <div className="flex items-center text-gray-400">
+            <CreditCardIcon className="h-6 w-6 mr-2" />
+            <span className="font-bold text-sm uppercase tracking-wider">
+              Payment
+            </span>
+          </div>
+        </div>
 
-          {/* Right Side: Order Summary */}
-          <div className="w-full md:w-1/2 mt-8 md:mt-0 bg-white rounded-lg shadow-xl p-8 h-fit sticky top-24">
-            <h3 className="text-xl font-bold text-gray-800 border-b pb-2 mb-6">
-              Order Summary
-            </h3>
-            <div className="space-y-6">
-              {/* UPDATED: Product Image and Name Section */}
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-4">
-                  {/* Product Image Square */}
-                  <div className="relative w-16 h-16 flex-shrink-0 border border-gray-200 rounded-md overflow-hidden bg-gray-50">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+          {/* Left Side: Checkout Form */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full lg:w-3/5"
+          >
+            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-10">
+              <h2 className="text-2xl font-extrabold text-gray-900 mb-8">
+                Shipping Information
+              </h2>
+
+              <form
+                id="direct-checkout-form"
+                onSubmit={handleConfirmOrder}
+                className="space-y-8"
+              >
+                {/* Contact Section */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">
+                    Contact Details
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className={labelClass}>Full Name</label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={shippingInfo.name}
+                        onChange={handleInputChange}
+                        required
+                        className={inputClass}
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Phone Number</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={shippingInfo.phone}
+                        onChange={handleInputChange}
+                        required
+                        className={inputClass}
+                        placeholder="+880 1..."
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>
+                      Email Address (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={shippingInfo.email}
+                      onChange={handleInputChange}
+                      className={inputClass}
+                      placeholder="john@example.com"
+                    />
+                  </div>
+                </div>
+
+                {/* Delivery Section */}
+                <div className="space-y-6 pt-4">
+                  <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">
+                    Delivery Details
+                  </h3>
+                  <div>
+                    <label className={labelClass}>Delivery Area</label>
+                    <div className="relative">
+                      <select
+                        name="area"
+                        value={shippingInfo.area}
+                        onChange={handleInputChange}
+                        required
+                        className={`${inputClass} appearance-none cursor-pointer`}
+                      >
+                        <option value="" disabled>
+                          Select a delivery zone
+                        </option>
+                        <option value="insideDhakaSouth">
+                          Dhaka (South) - ৳70
+                        </option>
+                        <option value="insideDhakaNorth">
+                          Dhaka (North) - ৳70
+                        </option>
+                        <option value="Gazipur">Gazipur - ৳100</option>
+                        <option value="OutSideDhaka">
+                          Outside Of Dhaka - ৳120
+                        </option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                        <svg
+                          className="fill-current h-4 w-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Complete Address</label>
+                    <textarea
+                      name="address"
+                      value={shippingInfo.address}
+                      onChange={handleInputChange}
+                      rows="3"
+                      required
+                      className={inputClass}
+                      placeholder="House, Road, Block, Area..."
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>
+                      Delivery Instructions (Optional)
+                    </label>
+                    <textarea
+                      name="note"
+                      value={shippingInfo.note}
+                      onChange={handleInputChange}
+                      rows="2"
+                      className={inputClass}
+                      placeholder="e.g. Call before delivery, leave at front desk..."
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+
+          {/* Right Side: Order Summary & Payment Button */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="w-full lg:w-2/5"
+          >
+            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-10 lg:sticky lg:top-28">
+              <h2 className="text-2xl font-extrabold text-gray-900 mb-6 border-b border-gray-100 pb-4">
+                Order Summary
+              </h2>
+
+              {/* Single Item Breakdown */}
+              <div className="flex justify-between items-center group mb-6">
+                <div className="flex items-center space-x-4 pr-4">
+                  <div className="relative w-16 h-16 shrink-0 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
                     <Image
                       src={productData?.images?.[0] || "/placeholder.png"}
                       alt={productData?.name || "Product Image"}
                       fill
                       sizes="64px"
-                      className="object-cover"
+                      className="object-cover group-hover:scale-110 transition-transform duration-300"
                     />
+                    <div className="absolute -top-2 -right-2 bg-gray-900 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full z-10">
+                      1
+                    </div>
                   </div>
-                  {/* Product Name */}
-                  <p className="font-semibold text-gray-900 line-clamp-2">
-                    {productData?.name || "Product Name Loading..."}
-                  </p>
+                  <div>
+                    <p className="font-bold text-sm text-gray-900 line-clamp-2 leading-snug">
+                      {productData?.name}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">
+                      {productData?.brand}
+                    </p>
+                  </div>
                 </div>
-                {/* Product Price */}
-                <p className="text-gray-600 font-medium ml-4">৳{productPrice}</p>
+                <p className="text-sm font-bold text-gray-900 whitespace-nowrap">
+                  ৳{productPrice}
+                </p>
               </div>
 
-              <div className="flex justify-between border-t border-gray-100 pt-4">
-                <span className="text-gray-600">Shipping:</span>
-                <span className="font-medium">৳{shippingFee}</span>
+              {/* Price Breakdown */}
+              <div className="space-y-3 pt-6 border-t border-gray-100 mb-6">
+                <div className="flex justify-between text-gray-500 font-medium text-sm">
+                  <span>Subtotal</span>
+                  <span className="text-gray-900">৳{productPrice}</span>
+                </div>
+                <div className="flex justify-between text-gray-500 font-medium text-sm">
+                  <span className="flex items-center">
+                    <TruckIcon className="w-4 h-4 mr-1" /> Shipping Fee
+                  </span>
+                  {shippingFee > 0 ? (
+                    <span className="text-gray-900">৳{shippingFee}</span>
+                  ) : (
+                    <span className="text-gray-400 italic">Select Area</span>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="flex justify-between font-extrabold text-2xl border-t-2 border-gray-200 pt-4 mt-4 text-gray-900">
-              <span>Total:</span>
-              <span>৳{total}</span>
+              {/* Total Row */}
+              <div className="flex justify-between items-end pt-4 border-t-2 border-gray-100 mb-8">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">
+                    Total Due
+                  </p>
+                  <p className="text-sm text-gray-400">Cash on Delivery</p>
+                </div>
+                <span className="font-black text-3xl text-gray-900">
+                  ৳{total}
+                </span>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                form="direct-checkout-form"
+                disabled={isSubmitting || !shippingInfo.area}
+                className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all duration-300 disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheckIcon className="h-6 w-6 mr-2" />
+                    Place Order Now
+                  </>
+                )}
+              </button>
+
+              <p className="text-xs text-center text-gray-400 mt-4 font-medium flex items-center justify-center">
+                <ShieldCheckIcon className="w-4 h-4 mr-1" /> Your information is
+                encrypted and secure.
+              </p>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
