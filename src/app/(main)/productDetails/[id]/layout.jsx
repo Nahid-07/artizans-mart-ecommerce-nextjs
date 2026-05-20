@@ -14,7 +14,7 @@ export async function generateMetadata({ params }) {
   }
   
   try {
-    const res = await axios.get(`http://localhost:5000/product/${id}`);
+    const res = await axios.get(`https://artizans-mart-ecommerce-server.onrender.com/product/${id}`);
     
     // Smart extraction
     let productObj = res.data;

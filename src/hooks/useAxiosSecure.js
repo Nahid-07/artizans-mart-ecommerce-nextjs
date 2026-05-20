@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 // Create a dedicated Axios instance
 const axiosSecure = axios.create({
   // Make sure this matches your actual backend URL!
-  baseURL: "http://localhost:5000", 
+  baseURL: process.env.NEXT_PUBLIC_API_URL, 
   withCredentials: true 
 });
 

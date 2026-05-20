@@ -100,7 +100,7 @@ export default function ShopPage() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen py-16 md:py-24 font-sans">
+    <div className="bg-gray-50 min-h-screen py-16 md:py-24 font-sans mt-10 md:mt-0">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         {/* Page Header */}
         <div className="text-center mb-8 md:mb-12">
